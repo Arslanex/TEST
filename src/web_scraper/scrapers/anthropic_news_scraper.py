@@ -6,7 +6,7 @@ class AnthropicNewsScaper():
     def __init__(self):
         self.fetcher = StealthyFetcher(auto_match=False)
         self.base_url = 'https://www.anthropic.com/news/'
-
+        self.source = 'ANTHROPIC'
         self.article_data = []
 
     def _extract_page(self):
@@ -41,6 +41,7 @@ class AnthropicNewsScaper():
             article_content = self._extract_article_content(article_url)
 
             article_data = {
+                'article_source': self.source,
                 'article_name': article_title,
                 'article_link': article_url,
                 'publish_date': article_publish_date,
