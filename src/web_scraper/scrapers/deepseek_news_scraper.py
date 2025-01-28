@@ -2,7 +2,7 @@ from dateutil import parser
 from scrapling import StealthyFetcher
 
 
-class MetaNewsScaper():
+class DeepSeekNewsScaper():
     def __init__(self):
         self.fetcher = StealthyFetcher(auto_match=False)
         self.base_url = 'https://www.deepseekv3.com/en/blog'
@@ -119,5 +119,5 @@ class MetaNewsScaper():
 
 
 if __name__ == '__main__':
-    scraper = MetaNewsScaper()
+    scraper = DeepSeekNewsScaper()
     scraper.scrape()

@@ -2,7 +2,7 @@ from dateutil import parser
 from scrapling import StealthyFetcher
 import re
 
-class MetaNewsScaper():
+class OpenAINewsScaper():
     def __init__(self):
         self.fetcher = StealthyFetcher(auto_match=False)
         self.base_url = 'https://openai.com/news/'
@@ -117,5 +117,5 @@ class MetaNewsScaper():
 
 
 if __name__ == '__main__':
-    scraper = MetaNewsScaper()
+    scraper = OpenAINewsScaper()
     scraper.scrape()
