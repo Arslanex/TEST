@@ -1,18 +1,14 @@
-from dateutil import parser
-from scrapling import StealthyFetcher
 import re
+from dateutil import parser
+from src.web_scraper.base_news_scraper import BaseNewsScraper
 
-class OpenAINewsScaper():
+
+class OpenAINewsScaper(BaseNewsScraper):
     def __init__(self):
-        self.fetcher = StealthyFetcher(auto_match=False)
-        self.base_url = 'https://openai.com/news/'
-        self.source = 'OPENAI'
-        self.article_data = []
-
-    def _extract_page(self):
-        page = self.fetcher.fetch(self.base_url)
-        print("Status Code:", page.status)
-        return page
+        super().__init__(
+            base_url='https://openai.com/news/',
+            source='OPENAI'
+        )
 
     def _extract_main_content(self):
         main_content = self._extract_page().css_first('#results')
@@ -29,31 +25,9 @@ class OpenAINewsScaper():
 
         return main_content.css('a')
 
-    def _extract_article_elements(self):
-        articles = self._extract_articles()
-        if articles == -1:
-            return -1
-
-        for article in articles:
-            article_title = self._extract_title(article)
-            article_url = self._extract_url(article)
-            article_publish_date = self._extract_publish_date(article)
-            article_content = self._extract_article_content(article_url)
-
-            article_data = {
-                'article_source': self.source,
-                'article_name': article_title,
-                'article_link': article_url,
-                'publish_date': article_publish_date,
-                'content': article_content
-            }
-
-            self._print_article_detail(article_data)
-            self.article_data.append(article_data)
-
     def _extract_title(self, article):
         article_title = article.attrib.get('aria-label', '').strip()
-        title=article_title if article_title else "No Title"
+        title = article_title if article_title else "No Title"
         return title
 
     def _extract_url(self, article):
@@ -102,18 +76,6 @@ class OpenAINewsScaper():
         except Exception as e:
             print(f"  Hata: {e}")
             return None
-
-    def _print_article_detail(self, article):
-        print("\n" +"=" * 50)
-        print(f"Title: {article['article_name']}")
-        print(f"URL: {article['article_link']}")
-        print(f"Publish Date (ISO): {article['publish_date']}")
-        print(f"Content: {article['content']}")
-        print("=" * 50)
-
-    def scrape(self):
-        self._extract_article_elements()
-        return self.article_data
 
 
 if __name__ == '__main__':
