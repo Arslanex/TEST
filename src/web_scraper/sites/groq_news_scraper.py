@@ -2,7 +2,7 @@ from dateutil import parser
 from src.web_scraper.base_news_scraper import BaseNewsScraper
 
 
-class GrokNewsScaper(BaseNewsScraper):
+class GroqNewsScraper(BaseNewsScraper):
     def __init__(self):
         super().__init__(
             base_url='https://groq.com/category/blog/',
@@ -78,5 +78,5 @@ class GrokNewsScaper(BaseNewsScraper):
 
 
 if __name__ == '__main__':
-    scraper = GrokNewsScaper()
+    scraper = GroqNewsScraper()
     scraper.scrape()

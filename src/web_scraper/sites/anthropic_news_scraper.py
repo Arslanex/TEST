@@ -2,7 +2,7 @@ from dateutil import parser
 from src.web_scraper.base_news_scraper import BaseNewsScraper
 
 
-class AnthropicNewsScaper(BaseNewsScraper):
+class AnthropicNewsScraper(BaseNewsScraper):
     def __init__(self):
         super().__init__(
             base_url='https://www.anthropic.com/news/',
@@ -73,5 +73,5 @@ class AnthropicNewsScaper(BaseNewsScraper):
 
 
 if __name__ == '__main__':
-    scraper = AnthropicNewsScaper()
+    scraper = AnthropicNewsScraper()
     scraper.scrape()

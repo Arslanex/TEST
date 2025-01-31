@@ -2,7 +2,7 @@ from dateutil import parser
 from src.web_scraper.base_news_scraper import BaseNewsScraper
 
 
-class MetaNewsScaper(BaseNewsScraper):
+class MetaNewsScraper(BaseNewsScraper):
     def __init__(self):
         super().__init__(
             base_url='https://ai.meta.com/blog/',
@@ -81,5 +81,5 @@ class MetaNewsScaper(BaseNewsScraper):
 
 
 if __name__ == '__main__':
-    scraper = MetaNewsScaper()
+    scraper = MetaNewsScraper()
     scraper.scrape()
