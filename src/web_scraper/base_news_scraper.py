@@ -9,6 +9,7 @@ class BaseNewsScraper(ABC):
         self.base_url = base_url
         self.source = source
         self.article_data = []
+        self.max_articles = 4
 
     def _extract_page(self):
         page = self.fetcher.fetch(self.base_url)
@@ -27,6 +28,8 @@ class BaseNewsScraper(ABC):
         articles = self._extract_articles()
         if articles == -1:
             return -1
+
+        articles = articles[:min(len(articles), self.max_articles)]
 
         for article in articles:
             try:
