@@ -1,26 +1,19 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, HttpUrl, Field, ConfigDict
+from typing import Optional, List, Dict, Any, Annotated
+from pydantic import BaseModel, HttpUrl, Field, ConfigDict, GetJsonSchemaHandler, BeforeValidator
+from pydantic.json_schema import JsonSchemaValue
 from bson import ObjectId
 from .enums import NewsSource, ScraperStatus
+import json
 
-class PyObjectId(ObjectId):
-    """Custom type for handling MongoDB ObjectId."""
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
+def validate_object_id(v: Any) -> ObjectId:
+    if isinstance(v, ObjectId):
+        return v
+    if ObjectId.is_valid(v):
         return ObjectId(v)
+    raise ValueError("Invalid ObjectId")
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, field_schema, **kwargs):
-        """Return the JSON Schema for the ObjectId type."""
-        field_schema.update(type="string")
-        return field_schema
+PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 class Article(BaseModel):
     """
@@ -40,13 +33,15 @@ class Article(BaseModel):
     article_name: str
     article_link: HttpUrl
     publish_date: Optional[datetime] = None
-    content: str
+    article_content: str
 
     model_config = ConfigDict(
         populate_by_name=True,
         arbitrary_types_allowed=True,
+        use_enum_values=True,  # Automatically convert enums to their underlying values
         json_encoders={
             ObjectId: str,
+            HttpUrl: str,  # Convert HttpUrl to string for JSON serialization
             datetime: lambda dt: dt.isoformat()
         },
         json_schema_extra={
@@ -56,7 +51,7 @@ class Article(BaseModel):
                 "article_name": "Google Gemini Ultra Performans Testleri",
                 "article_link": "https://airesearch.blog/gemini-ultra-benchmarks",
                 "publish_date": "2024-01-30T00:00:00Z",
-                "content": "Gemini Ultra, MMLU'da %92.3 skorla GPT-4'ü geride bıraktı...",
+                "article_content": "Gemini Ultra, MMLU'da %92.3 skorla GPT-4'ü geride bıraktı...",
                 "created_at": "2024-01-30T00:00:00Z",
                 "updated_at": "2024-01-30T00:00:00Z",
                 "version": 1,
@@ -65,6 +60,13 @@ class Article(BaseModel):
             }
         }
     )
+
+    def model_dump(self, *args, **kwargs):
+        """Override model_dump to convert HttpUrl to string for MongoDB."""
+        data = super().model_dump(*args, **kwargs)
+        if 'article_link' in data and isinstance(data['article_link'], HttpUrl):
+            data['article_link'] = str(data['article_link'])
+        return data
 
     # Database methods
     def update_timestamp(self):
@@ -103,8 +105,11 @@ class Article(BaseModel):
     def to_mongo(self, exclude_none: bool = True) -> dict:
         """Convert to MongoDB document format."""
         data = self.dict(by_alias=True, exclude_none=exclude_none)
-        if "_id" in data and data["_id"] is None:
-            data.pop("_id")
+        # Manually convert article_link from HttpUrl to str
+        if "article_link" in data and data["article_link"] is not None:
+            data["article_link"] = str(data["article_link"])
+        if data.get("_id") is None:
+            data.pop("_id", None)
         return data
 
     @classmethod
@@ -118,11 +123,25 @@ class Article(BaseModel):
         """Get a brief summary of the article."""
         return (
             f"Article: {self.article_name}\n"
-            f"Source: {self.article_source.value}\n"
+            f"Source: {self.article_source}\n"
             f"Date: {self.publish_date.strftime('%Y-%m-%d %H:%M:%S') if self.publish_date else 'N/A'}\n"
             f"URL: {self.article_link}\n"
             f"Status: {'Active' if self.is_active else 'Inactive'}"
         )
+
+    def to_mongo(self, exclude_none: bool = True) -> dict:
+        """
+        Convert the Article instance to a dictionary for MongoDB.
+        This version uses model_dump_json to ensure all custom encoders are applied.
+        """
+        # Produce a JSON string with encoders applied
+        json_str = self.model_dump_json(by_alias=True, exclude_none=exclude_none)
+        # Convert the JSON string back into a Python dict
+        data = json.loads(json_str)
+        # Remove _id if it is None
+        if data.get("_id") is None:
+            data.pop("_id", None)
+        return data
 
 class ScrapingEvent(BaseModel):
     """Base model for scraping events"""
